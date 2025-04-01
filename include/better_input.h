@@ -23,6 +23,15 @@
 #define pr_raw_str(f) write(STDOUT_FILENO, f, strlen(f))
 #define pr_raw_char(f) write(STDOUT_FILENO, f, 1)
 
+/**
+ * @brief Gives you an input from the terminal.
+ * @param buffer: this is the string where the input will be stored.
+ * @param size: the size of the buffer
+ * @returns the buffer param
+ *
+ * @note Currently it does not really handle errors, so use at own risk.
+ * */
+
 char* get_input(char* buffer, int size);
 
 #endif // !ALOFC_H

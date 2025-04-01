@@ -7,6 +7,7 @@
 #include "better_input.h"
 
 
+// Struct containing the need info for the input
 typedef struct input_state{
 	char* buffer;
 	int pos;
@@ -16,11 +17,7 @@ typedef struct input_state{
 
 struct termios original_state;
 
-void disbale_raw_mode(){
-	fflush(stdout);
-	tcsetattr(STDIN_FILENO, TCSANOW, &original_state);
-}
-
+// Turns the terminal into "Raw" mode. Will tell the terminal to let us handle almost everything
 int enable_raw_mode(){
 	if(tcgetattr(STDIN_FILENO, &original_state) == -1){
 		return -1;
@@ -38,6 +35,14 @@ int enable_raw_mode(){
 	return 0;
 }
 
+// Turns the terminal back to the normal mode
+void disbale_raw_mode(){
+	fflush(stdout);
+	tcsetattr(STDIN_FILENO, TCSANOW, &original_state);
+}
+
+// Shits the given buffer one byte to the right
+// @note: There must be space enough on the right side to shift.
 static void right_shift_string(char* buffer, int size){
 	char tmp[size];
 	strcpy(tmp, buffer);
@@ -45,6 +50,8 @@ static void right_shift_string(char* buffer, int size){
 	memmove(buffer, tmp, strlen(tmp)+1);
 }
 
+// Shits the given buffer one byte to the left
+// @note: There must be space enough on the left side to shift.
 static void left_shift_string(char* buffer, int size){
 	char tmp[size];
 	strcpy(tmp, buffer);
@@ -53,13 +60,21 @@ static void left_shift_string(char* buffer, int size){
 	buffer[strlen(tmp)] = '\0';
 }
 
+
+// Will print the current buffer to the screen.
 static void render_buffer(input_state_t* state){
-	// Print Buffer to terminal
+	// Moves the cursor to the start of buffer
 	for(int i = 0; i<state->pos; i++){
 		pr_raw_str(MOVE_LEFT);
 	}
+
+	// Clear the line from the cursor and out
 	pr_raw_str("\033[K");
+
+	// Print the buffer
 	pr_raw_str(state->buffer);
+
+	// Return the cursor to where it was placed
 	for(int i = 0; i < state->num_of_char-state->pos; i++){
 		pr_raw_str(MOVE_LEFT);
 	}
@@ -126,7 +141,7 @@ char* get_input(char* buffer, int size){
 	state.num_of_char = 0;
 	state.size = size;
 
-	char eol = 0;
+	char eol = 0; // Is end of line
 	while (!eol) {
 		char ch = '\0';
 		read(STDIN_FILENO, &ch, 1);
@@ -140,7 +155,7 @@ char* get_input(char* buffer, int size){
 					state.pos = 0;
 					break;
 				case CTRL_C:
-					pr_raw_str("\r\n");
+					pr_raw_str(NEW_LINE);
 					disbale_raw_mode();
 					exit(0);
 					break;
@@ -158,7 +173,7 @@ char* get_input(char* buffer, int size){
 					continue;
 
 			}
-		}else{
+		}else{ // Is printable character
 			if(state.num_of_char < size){
 				if(state.pos == state.num_of_char){
 					buffer[state.pos++] = ch;
@@ -177,6 +192,6 @@ char* get_input(char* buffer, int size){
 		render_buffer(&state);
 	}
 	
-	disbale_raw_mode();
+	disbale_raw_mode(); // if this is not done, the terminal will remain fucked after exit.
 	return state.buffer;
 }
