@@ -105,13 +105,15 @@ static void handle_backspace(input_state_t* state){
 			pr_raw_str(MOVE_LEFT);
 			pr_raw_char(" ");
 			pr_raw_str(MOVE_LEFT);
-			state->num_of_char--;
 		}else if(state->pos < state->num_of_char){
 			left_shift_string(state->buffer+state->pos, state->size);
 			pr_raw_str(MOVE_LEFT);
 			state->pos--;
 		}
+		state->num_of_char--;
 
+	}else{
+		pr_raw_str(BELL);
 	}
 
 }
