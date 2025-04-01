@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <termios.h>
 #include <stdlib.h>
@@ -16,7 +17,8 @@ typedef struct input_state{
 struct termios original_state;
 
 void disbale_raw_mode(){
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_state);
+	fflush(stdout);
+	tcsetattr(STDIN_FILENO, TCSANOW, &original_state);
 }
 
 int enable_raw_mode(){
@@ -30,7 +32,8 @@ int enable_raw_mode(){
 	raw.c_oflag &= ~(OPOST);
 	raw.c_lflag &= ~(ECHO | ICANON | ISIG);
 
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+	fflush(stdout);
+	tcsetattr(STDIN_FILENO, TCSADRAIN, &raw);
 
 	return 0;
 }
@@ -55,12 +58,8 @@ static void render_buffer(input_state_t* state){
 	for(int i = 0; i<state->pos; i++){
 		pr_raw_str(MOVE_LEFT);
 	}
-	//pr_raw_char(MOVE_TO_THELEFT);
-	while(*state->buffer != '\0'){
-		pr_raw_char(state->buffer);
-		state->buffer++;
-	}
-	state->buffer -= state->num_of_char;
+	pr_raw_str("\033[K");
+	pr_raw_str(state->buffer);
 	for(int i = 0; i < state->num_of_char-state->pos; i++){
 		pr_raw_str(MOVE_LEFT);
 	}
@@ -111,7 +110,6 @@ static void handle_backspace(input_state_t* state){
 			left_shift_string(state->buffer+state->pos, state->size);
 			pr_raw_str(MOVE_LEFT);
 			state->pos--;
-			render_buffer(state);
 			state->buffer[--state->num_of_char] = '\0';
 		}
 
@@ -134,7 +132,10 @@ char* get_input(char* buffer, int size){
 		if(iscntrl(ch)){ // Is not printable character
 			switch(ch){
 				case CTRL_A:
-					pr_raw_char("\r");
+					while(state.pos > 0){
+						pr_raw_str(MOVE_LEFT);
+						state.pos--;
+					}
 					state.pos = 0;
 					break;
 				case CTRL_C:
@@ -162,10 +163,12 @@ char* get_input(char* buffer, int size){
 					buffer[state.pos++] = ch;
 					buffer[state.pos] = '\0';
 					state.num_of_char++;
+					pr_raw_str(MOVE_RIGHT);
 				}else if(state.pos < state.num_of_char){
 					right_shift_string(buffer+state.pos, size);
 					buffer[state.pos++] = ch;
 					state.num_of_char++;
+					pr_raw_str(MOVE_RIGHT);
 				}
 			}
 		}
