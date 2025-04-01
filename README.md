@@ -1,3 +1,3 @@
 # Better input for C
 
-Gives a better input for C. Enables moving in the buffer with arrows, and go to start of line with ctrl+a
+Gives a better input for C. Enables moving in the buffer with arrow keys, and lets you go to the start of the line with ctrl+a.
