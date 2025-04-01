@@ -50,7 +50,7 @@ static void left_shift_string(char* buffer, int size){
 	strcpy(tmp, buffer);
 	buffer--;
 	memmove(buffer, tmp, strlen(tmp)+1);
-	buffer[strlen(tmp)] = ' ';
+	buffer[strlen(tmp)] = '\0';
 }
 
 static void render_buffer(input_state_t* state){
@@ -110,7 +110,6 @@ static void handle_backspace(input_state_t* state){
 			left_shift_string(state->buffer+state->pos, state->size);
 			pr_raw_str(MOVE_LEFT);
 			state->pos--;
-			state->buffer[--state->num_of_char] = '\0';
 		}
 
 	}
